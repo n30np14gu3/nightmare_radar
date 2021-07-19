@@ -172,7 +172,8 @@ void draw_utils::hackProc(void* ptr)
 	
 
 		Entity localPlayer(ptr, CLIENT_STATE);
-		if(!localPlayer.isValid() || !localPlayer.getHealth())
+		//Remove localPlayer Health Check
+		if(!localPlayer.isValid() /*|| !localPlayer.getHealth()*/)
 			goto end_render;
 
 		QAngle localplayer_angles = localPlayer.getViewAngles();

@@ -17,6 +17,7 @@
 
 FILE* CON_OUT;
 FILE* CON_IN;
+
 std::string WINDOW_TITLE;
 
 //Offsets
@@ -147,7 +148,7 @@ INT WINAPI WinMain(
 	VM_START("#WinMain_prepare");
 	setup_console();
 	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] created by @shockbyte\n"));
-	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] created for @bwait\n"));
+	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] created for @biawit\n"));
 	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] updating offsets...\n"));
 	if (!update_offsets())
 	{
@@ -198,14 +199,14 @@ INT WINAPI WinMain(
 			fread(&buffer->buffer, drv_size, 1, drv_file);
 
 			int status = map_image(buffer, drv_size);
-			if(status != 0)
+			if (status != 0)
 			{
 				printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] can't load driver [manual mapper faild]!\n"));
 				printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] closing...\n"));
 				free(buffer);
 				fclose(drv_file);
 				close_console();
-				
+
 				return 0;
 			}
 
@@ -217,7 +218,7 @@ INT WINAPI WinMain(
 			fclose(drv_file);
 			return 0;
 		}
-		
+
 
 		ring0 = new KernelInterface();
 		if (!ring0->NoErrors)
