@@ -5,6 +5,8 @@
 #include "ImageLoadCallback.h"
 #include "CreateProcessCallback.h"
 
+#include "HookSetup.h"
+
 PDEVICE_OBJECT pDeviceObj;
 
 UNICODE_STRING DeviceName;
@@ -31,10 +33,6 @@ PDRIVER_OBJECT g_Driver;
 MmCopyVirtualMemoryFn MemCopy;
 UNICODE_STRING MemCopyRoutineName;
 
-NTSTATUS NTAPI IoCreateDriver(_In_opt_ PUNICODE_STRING 	DriverName,
-	_In_ PDRIVER_INITIALIZE 	InitializationFunction
-);
-
 NTSTATUS DriverEntry(
 	PDRIVER_OBJECT DriverObject,
 	PUNICODE_STRING RegistryPath
@@ -49,48 +47,18 @@ NTSTATUS DriverEntry(
 
 	for (ULONG t = 0; t < IRP_MJ_MAXIMUM_FUNCTION; t++)
 		DriverObject->MajorFunction[t] = UnsupportedDispatch;
-
-	DriverObject->MajorFunction[IRP_MJ_CREATE] = CreateCall;
-	DriverObject->MajorFunction[IRP_MJ_CLOSE] = CloseCall;
-	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = IoControl;
-
-	DPRINT("[NIGHTMARE DRV] Createing device...");
-
-	RtlSecureZeroMemory(&DeviceName, sizeof(DeviceName));
-	RtlInitUnicodeString(&DeviceName, DEVICE_NAME);
-	RtlSecureZeroMemory(&DosName, sizeof(DosName));
-	RtlInitUnicodeString(&DosName, SYMBOL_NAME);
-
-	NTSTATUS status = IoCreateDevice(DriverObject, 0, &DeviceName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE,
-		&pDeviceObj);
-	IoCreateSymbolicLink(&DosName, &DeviceName);
-
-	if (!NT_SUCCESS(status))
+	
+	DPRINT("[NIGHTMARE DRV] Setup hook...");
+	if(!SetupHook())
 	{
-		DPRINT("[NIGHTMARE DRV] Creating device Error: Code 0x%X", status);
-		return status;
+		DPRINT("[NIGHTMARE DRV] Can't setup communication hook :(");
+		return STATUS_ACCESS_DENIED;
 	}
-
-	if (pDeviceObj != NULL)
-	{
-		pDeviceObj->Flags |= DO_DIRECT_IO;
-		pDeviceObj->Flags &= ~DO_DEVICE_INITIALIZING;
-	}
-
-	DPRINT("[NIGHTMARE DRV] Getting routines...");
-	RtlSecureZeroMemory(&MemCopyRoutineName, sizeof(MemCopyRoutineName));
-	RtlInitUnicodeString(&MemCopyRoutineName, COPY_MEMORY_ROUTINE);
-	MemCopy = (MmCopyVirtualMemoryFn)MmGetSystemRoutineAddress(&MemCopyRoutineName);
-	if (MemCopy == NULL)
-	{
-		DPRINT("[NIGHTMARE DRV] Can't find %s Routine!", COPY_MEMORY_ROUTINE);
-		return STATUS_NOT_FOUND;
-	}
-
+	
 	DPRINT("[NIGHTMARE DRV] Setup callbacks...");
 	PsSetLoadImageNotifyRoutine(ImageLoadCallback);
 	PsSetCreateProcessNotifyRoutine(CreateProcessCallback, FALSE);
-	
+
 #ifndef DBG
 	//EnableCallback();
 #endif
@@ -101,19 +69,10 @@ NTSTATUS DriverEntry(
 
 
 NTSTATUS DriverEP(
-	PDRIVER_OBJECT DriverObject, 
+	PDRIVER_OBJECT DriverObject,
 	PUNICODE_STRING RegistryPath
 )
 {
-	NTSTATUS Result = STATUS_ACCESS_DENIED;
-#ifndef DBG
-	UNREFERENCED_PARAMETER(DriverObject);
-	UNREFERENCED_PARAMETER(RegistryPath);
-	UNICODE_STRING DriverString;
-	RtlInitUnicodeString(&DriverString, L"\\Driver\\PCIEX4_JOB_N2");
-	Result =IoCreateDriver(&DriverString, DriverEntry);
-#else
-	Result = DriverEntry(DriverObject, RegistryPath);
-#endif
-	return Result;
+	return DriverEntry(DriverObject, RegistryPath);
 }
+

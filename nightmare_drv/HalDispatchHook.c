@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "HookSetup.h"
 
 #define MM_TAG 'cf2'
 
@@ -6,8 +7,8 @@ NTSTATUS KeReadVirtualMemory32(PEPROCESS Process, DWORD32 SourceAddress, DWORD64
 NTSTATUS KeWriteVirtualMemory32(PEPROCESS Process, DWORD32 SourceAddress, DWORD64 TargetAddress, SIZE_T Size, PSIZE_T WritedBytes);
 
 
-void InitCheatData(PIRP Irp);
-void GetModules(PIRP Irp);
+void InitCheatData(void* Irp);
+void GetModules(void* Irp);
 
 #define WINDOWS_1803 17134
 #define WINDOWS_1809 17763
@@ -137,8 +138,6 @@ UINT64 TranslateLinearAddress(UINT64 directoryTableBase, UINT64 virtualAddress) 
 	return virtualAddress + pageOffset;
 }
 
-
-//
 NTSTATUS ReadProcessMemory(int pid, PVOID Address, PVOID AllocatedBuffer, SIZE_T size, SIZE_T* read)
 {
 	PEPROCESS pProcess = NULL;
@@ -221,68 +220,10 @@ NTSTATUS WriteVirtual(UINT64 dirbase, UINT64 address, UINT8* buffer, SIZE_T size
 	return WritePhysicalAddress(paddress, buffer, size, written);
 }
 
-NTSTATUS IoControl(PDEVICE_OBJECT DeviceObject, PIRP Irp)
+
+void GetModules(void* Irp)
 {
-	UNREFERENCED_PARAMETER(DeviceObject);
-
-	ULONG bytesIO = 0;
-	PIO_STACK_LOCATION stack = IoGetCurrentIrpStackLocation(Irp);
-	const ULONG controlCode = stack->Parameters.DeviceIoControl.IoControlCode;
-
-	PKERNEL_WRITE_REQUEST32 pWriteRequest32;
-	PKERNEL_READ_REQUEST32 pReadRequest32;
-
-	SIZE_T rwBytes = 0;
-	switch (controlCode)
-	{
-	case IO_INIT_CHEAT_DATA:
-		DPRINT("[NIGHTMARE DRV] IO_INIT_CHEAT_DATA");
-		InitCheatData(Irp);
-		bytesIO = sizeof(KERNEL_INIT_DATA_REQUEST);
-		break;
-
-	case IO_READ_PROCESS_MEMORY_32:
-		if (!DRIVER_INITED)
-			break;
-
-		pReadRequest32 = (PKERNEL_READ_REQUEST32)Irp->AssociatedIrp.SystemBuffer;
-		if (pReadRequest32 != NULL)
-		{
-			pReadRequest32->Result = KeReadVirtualMemory32(PEGAME_PROCESS, pReadRequest32->Address, (pReadRequest32->Response), pReadRequest32->Size, &rwBytes);
-		}
-		bytesIO = sizeof(KERNEL_READ_REQUEST32);
-		break;
-
-	case IO_WRITE_PROCESS_MEMORY_32:
-		if (!DRIVER_INITED)
-			break;
-
-		pWriteRequest32 = (PKERNEL_WRITE_REQUEST32)Irp->AssociatedIrp.SystemBuffer;
-		if (pWriteRequest32 != NULL)
-		{
-			pWriteRequest32->Result = KeWriteVirtualMemory32(PEGAME_PROCESS, pWriteRequest32->Address, pWriteRequest32->Value, pWriteRequest32->Size, &rwBytes);
-		}
-		bytesIO = sizeof(KERNEL_WRITE_REQUEST32);
-		break;
-
-	case IO_GET_CLIENT_DLL:
-		if (!DRIVER_INITED)
-			break;
-		GetModules(Irp);
-		bytesIO = sizeof(KERNEL_GET_CLIENT_DLL);
-		break;
-	default:break;
-	}
-	Irp->IoStatus.Status = STATUS_SUCCESS;
-	Irp->IoStatus.Information = bytesIO;
-
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-	return STATUS_SUCCESS;
-}
-
-void GetModules(PIRP Irp)
-{
-	PKERNEL_GET_CLIENT_DLL pModules = Irp->AssociatedIrp.SystemBuffer;
+	PKERNEL_GET_CLIENT_DLL pModules = Irp;
 	if (pModules != NULL)
 	{
 		if (CLIENT_DLL_BASE == 0 || ENGINE_DLL_BASE == 0)
@@ -296,26 +237,6 @@ void GetModules(PIRP Irp)
 	}
 }
 
-void InitCheatData(PIRP Irp)
-{
-	PKERNEL_INIT_DATA_REQUEST pInitData;
-	pInitData = (PKERNEL_INIT_DATA_REQUEST)Irp->AssociatedIrp.SystemBuffer;
-	DPRINT("[NIGHTMARE DRV] pInitData->CheatId = 0x%X", (DWORD32)pInitData->CheatId);
-	DPRINT("[NIGHTMARE DRV] pInitData->CsGoId = 0x%X", (DWORD32)pInitData->CsgoId);
-	if (!DRIVER_INITED)
-	{
-		GAME_PROCESS = (HANDLE)pInitData->CsgoId;
-		PROTECTED_PROCESS = (HANDLE)pInitData->CheatId;
-		pInitData->Result = PsLookupProcessByProcessId(GAME_PROCESS, &PEGAME_PROCESS);
-		pInitData->Result |= PsLookupProcessByProcessId(PROTECTED_PROCESS, &PEPROTECTED_PROCESS);
-		DRIVER_INITED = NT_SUCCESS(pInitData->Result);
-		DPRINT("pInitDate->Result = 0x$X", pInitData->Result);
-	}
-	else
-		pInitData->Result = STATUS_SUCCESS;
-
-}
-
 NTSTATUS KeReadVirtualMemory32(PEPROCESS Process, DWORD32 SourceAddress, DWORD64 TargetAddress, SIZE_T Size, PSIZE_T ReadedBytes)
 {
 	if (!MemCopy)
@@ -326,46 +247,83 @@ NTSTATUS KeReadVirtualMemory32(PEPROCESS Process, DWORD32 SourceAddress, DWORD64
 	if (!tmpBuff)
 		return STATUS_MEMORY_NOT_ALLOCATED;
 
-	result = ReadProcessMemory((UINT64)GAME_PROCESS, (PVOID)SourceAddress, tmpBuff, Size, ReadedBytes);
+	result = ReadProcessMemory((INT)GAME_PROCESS, (PVOID)SourceAddress, tmpBuff, Size, ReadedBytes);
 	if (!NT_SUCCESS(result))
 	{
 		ExFreePoolWithTag(tmpBuff, MM_TAG);
 		return STATUS_ACCESS_DENIED;
 	}
 
-	result = MemCopy(
-		PsGetCurrentProcess(),
+	result = ReadProcessMemory(
+		(INT)PROTECTED_PROCESS,
 		tmpBuff,
-		PEPROTECTED_PROCESS,
 		(PVOID64)TargetAddress,
 		Size,
-		KernelMode,
 		ReadedBytes
 	);
 	ExFreePoolWithTag(tmpBuff, MM_TAG);
-	
+
 	return result;
-	//return MemCopy(
-	//	Process,
-	//	(PVOID)SourceAddress,
-	//	PEPROTECTED_PROCESS,
-	//	(PVOID64)TargetAddress,
-	//	Size,
-	//	KernelMode,
-	//	ReadedBytes);
 }
 
 NTSTATUS KeWriteVirtualMemory32(PEPROCESS Process, DWORD32 SourceAddress, DWORD64 TargetAddress, SIZE_T Size, PSIZE_T WritedBytes)
 {
-	if (!MemCopy)
-		return STATUS_NOT_FOUND;
+	return STATUS_NOT_FOUND;
+}
 
-	return MemCopy(
-		PEPROTECTED_PROCESS,
-		(PVOID64)TargetAddress,
-		Process,
-		(PVOID)SourceAddress,
-		Size,
-		KernelMode,
-		WritedBytes);
+INT64 HalDispatchHook(void* IoData, PINT64 outStatus)
+{
+	if (!PROTECTED_PROCESS || !GAME_PROCESS)
+		return HalDispatchOriginal(IoData, outStatus);
+	
+	if (ExGetPreviousMode() != UserMode || !IoData)
+		return HalDispatchOriginal(IoData, outStatus);
+
+	KERNEL_HOOK_REQUEST safeData;
+	if(!SafeCopy(&safeData, IoData, sizeof(safeData)) || safeData.Magic != 0x7331)
+		return HalDispatchOriginal(IoData, outStatus);
+
+
+	PVOID kernelBuffer = ExAllocatePool(NonPagedPool, safeData.RequestSize);
+	if(!ReadFromUm(kernelBuffer, safeData.RequestData, safeData.RequestSize, PEPROTECTED_PROCESS))
+	{
+		ExFreePool(kernelBuffer);
+		return HalDispatchOriginal(IoData, outStatus);
+	}
+	const ULONG controlCode = safeData.RequestCode;
+
+
+	PKERNEL_READ_REQUEST32 pReadRequest32;
+
+	SIZE_T rwBytes = 0;
+	switch (controlCode)
+	{
+	case IO_READ_PROCESS_MEMORY_32:
+		if (!DRIVER_INITED)
+			break;
+
+		pReadRequest32 = (PKERNEL_READ_REQUEST32)kernelBuffer;
+		if (pReadRequest32 != NULL)
+		{
+			pReadRequest32->Result = KeReadVirtualMemory32(PEGAME_PROCESS, pReadRequest32->Address, (pReadRequest32->Response), pReadRequest32->Size, &rwBytes);
+		}
+		break;
+
+
+	case IO_GET_CLIENT_DLL:
+		if (!DRIVER_INITED)
+			break;
+		GetModules(kernelBuffer);
+		break;
+	default:
+		if(kernelBuffer)
+			ExFreePool(kernelBuffer);
+		return HalDispatchOriginal(IoData, outStatus);
+	}
+
+
+	WriteToUm(safeData.RequestData, kernelBuffer, safeData.RequestSize, PEPROTECTED_PROCESS);
+	if(kernelBuffer)
+		ExFreePool(kernelBuffer);
+	return STATUS_SUCCESS;
 }

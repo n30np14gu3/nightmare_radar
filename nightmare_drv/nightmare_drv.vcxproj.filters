@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Driver Files">
-      <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
-      <Extensions>inf;inv;inx;mof;mc;</Extensions>
-    </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{fd0dfc51-81dc-42dc-a007-3bd8c5fbc9f5}</UniqueIdentifier>
     </Filter>
@@ -20,11 +16,9 @@
     <Filter Include="Core\IO">
       <UniqueIdentifier>{cf99a9d4-ae23-41c7-8bfc-af01452a2b56}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Inf Include="nightmare_drv.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
+    <Filter Include="Core\Hooks">
+      <UniqueIdentifier>{f3d7e4b2-0847-4470-bc12-42ba7a85bdfe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DriverUnload.c" />
@@ -35,17 +29,14 @@
     <ClCompile Include="ImageLoadCallback.c">
       <Filter>Core\Callbacks\ImageLoadCallback</Filter>
     </ClCompile>
-    <ClCompile Include="IoCloseCall.c">
-      <Filter>Core\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="IoControl.c">
-      <Filter>Core\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="IoCreateCall.c">
-      <Filter>Core\IO</Filter>
-    </ClCompile>
     <ClCompile Include="UnsupportedDispatch.c">
       <Filter>Core\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Hook.c">
+      <Filter>Core\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="HalDispatchHook.c">
+      <Filter>Core\Hooks</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -66,6 +57,12 @@
     </ClInclude>
     <ClInclude Include="functions.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Hook.h">
+      <Filter>Core\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="HookSetup.h">
+      <Filter>Core\Hooks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -78,21 +78,18 @@
     <Link>
       <TreatLinkerWarningAsErrors>false</TreatLinkerWarningAsErrors>
       <EntryPointSymbol>DriverEP</EntryPointSymbol>
+      <AdditionalDependencies>VMProtectDDK64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Inf Include="nightmare_drv.inf" />
-  </ItemGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CreateProcessCallback.c" />
     <ClCompile Include="DriverUnload.c" />
+    <ClCompile Include="HalDispatchHook.c" />
+    <ClCompile Include="Hook.c" />
     <ClCompile Include="ImageLoadCallback.c" />
-    <ClCompile Include="IoCloseCall.c" />
-    <ClCompile Include="IoControl.c" />
-    <ClCompile Include="IoCreateCall.c" />
     <ClCompile Include="nightmare_drv.c" />
     <ClCompile Include="UnsupportedDispatch.c" />
   </ItemGroup>
@@ -102,6 +99,8 @@
     <ClInclude Include="functions.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="global_defs.h" />
+    <ClInclude Include="Hook.h" />
+    <ClInclude Include="HookSetup.h" />
     <ClInclude Include="ImageLoadCallback.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -2,8 +2,10 @@
 #include <ntdef.h>
 #include <ntifs.h>
 #include <ntddk.h>
-#include "driver_io.h"
 #include <VMProtectDDK.h>
+#include "driver_io.h"
+#include "global_defs.h"
+
 
 #ifdef DBG
 #define DPRINT(format, ...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, format, __VA_ARGS__)
