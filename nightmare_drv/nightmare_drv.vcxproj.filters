@@ -16,9 +16,6 @@
     <Filter Include="Core\IO">
       <UniqueIdentifier>{cf99a9d4-ae23-41c7-8bfc-af01452a2b56}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core\Hooks">
-      <UniqueIdentifier>{f3d7e4b2-0847-4470-bc12-42ba7a85bdfe}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DriverUnload.c" />
@@ -32,11 +29,14 @@
     <ClCompile Include="UnsupportedDispatch.c">
       <Filter>Core\IO</Filter>
     </ClCompile>
-    <ClCompile Include="Hook.c">
-      <Filter>Core\Hooks</Filter>
+    <ClCompile Include="IoCreateCall.c">
+      <Filter>Core\IO</Filter>
     </ClCompile>
-    <ClCompile Include="HalDispatchHook.c">
-      <Filter>Core\Hooks</Filter>
+    <ClCompile Include="IoCloseCall.c">
+      <Filter>Core\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="IoControl.c">
+      <Filter>Core\IO</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,12 +57,6 @@
     </ClInclude>
     <ClInclude Include="functions.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Hook.h">
-      <Filter>Core\Hooks</Filter>
-    </ClInclude>
-    <ClInclude Include="HookSetup.h">
-      <Filter>Core\Hooks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

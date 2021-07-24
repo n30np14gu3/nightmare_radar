@@ -32,9 +32,6 @@
     <ClCompile Include="render\render.cpp">
       <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="maper\maper.cpp">
-      <Filter>maper</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="SDK">
@@ -54,9 +51,6 @@
     </Filter>
     <Filter Include="render">
       <UniqueIdentifier>{6ab13615-fd94-4f33-b594-5812c72f5279}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="maper">
-      <UniqueIdentifier>{5f218ed0-5547-4d0d-9787-7b635ae6a692}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -104,9 +98,6 @@
     </ClInclude>
     <ClInclude Include="render\render.h">
       <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="maper\maper.h">
-      <Filter>maper</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

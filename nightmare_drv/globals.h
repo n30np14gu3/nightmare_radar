@@ -2,7 +2,6 @@
 #include <ntdef.h>
 #include <ntifs.h>
 #include <ntddk.h>
-#include <VMProtectDDK.h>
 #include "driver_io.h"
 #include "global_defs.h"
 

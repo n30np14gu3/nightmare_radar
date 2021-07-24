@@ -12,7 +12,6 @@
 #include "SDK/lazy_importer.hpp"
 #include "ring0/kernel_interface.h"
 #include "render/render.h"
-#include "maper/maper.h"
 #include <VMProtectSDK.h>
 
 FILE* CON_OUT;
@@ -171,64 +170,11 @@ INT WINAPI WinMain(
 	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] loading driver...\n"));
 	if (!ring0->NoErrors)
 	{
-		printf_s("[NIGHTMARE RADAR] not connected!\ntrying to mapping driver...\n");
-		printf_s("[NIGHTMARE RADAR] trying to mapping driver...\n");
-		delete ring0;
-		ring0 = nullptr;
-
-		//Mapping
-		FILE* drv_file = nullptr;
-		const char* drv_name = ENCRYPT_STR_A("core.sys");
-		if (fopen_s(&drv_file, drv_name, "rb")) {
-			printf("[NIGHTMARE RADAR] failed to open file: %s\n", drv_name);
-			return 1;
-		}
-
-		fseek(drv_file, 0, SEEK_END);
-		ftell(drv_file);
-
-		unsigned int drv_size = ftell(drv_file);
-
-		fseek(drv_file, 0, SEEK_SET);
-
-		image_data* buffer = static_cast<image_data*>(malloc(drv_size + sizeof(image_data) + 0xFF));
-		if (buffer) {
-			buffer->magic = 0x6789;
-			buffer->length = drv_size;
-
-			fread(&buffer->buffer, drv_size, 1, drv_file);
-
-			int status = map_image(buffer, drv_size);
-			if (status != 0)
-			{
-				printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] can't load driver [manual mapper faild]!\n"));
-				printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] closing...\n"));
-				free(buffer);
-				fclose(drv_file);
-				close_console();
-
-				return 0;
-			}
-
-			free(buffer);
-		}
-		else {
-			printf("[NIGHTMARE RADAR] failed to allocate buffer of size 0x%X\n", drv_size);
-			close_console();
-			fclose(drv_file);
-			return 0;
-		}
-
-
-		ring0 = new KernelInterface();
-		if (!ring0->NoErrors)
-		{
-			printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] can't load driver [0x%X]\n"), ring0->GetErrorCode());
-			printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] closing...\n"));
-			close_console();
-			return 0;
-		}
+		printf(ENCRYPT_STR_A("[NIGHTMARE RADAR] can't load driver 0x%X\n"), ring0->GetErrorCode());
+		close_console();
+		return 0;
 	}
+
 	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] driver loaded!\n"));
 	printf_s(ENCRYPT_STR_A("[NIGHTMARE RADAR] getting game info...\n"));
 	while (!ring0->Attach()) {}

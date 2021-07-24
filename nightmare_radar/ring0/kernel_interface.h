@@ -9,7 +9,6 @@ struct CSGoModules
 	DWORD32 bEngine;
 };
 
-typedef void* (*fnNtHooked)(void*, void*, void*, void*);
 
 class KernelInterface
 {
@@ -28,41 +27,32 @@ public:
 	{
 		NoErrors = false;
 
-		if (hook == nullptr)
+		if (m_hDriver == INVALID_HANDLE_VALUE)
 			return;
 
 		KERNEL_READ_REQUEST32 req;
 		req.Size = sizeof(T);
 		req.Address = address;
 		req.Response = (DWORD64)result;
-		req.Result = -1;
+		req.result = -1;
 
-		KERNEL_HOOK_REQUEST hookReq{
-			0x7331,
-IO_READ_PROCESS_MEMORY_32,
-&req,
-sizeof(req),
-		};
-		UINT status = 0;
-
-		const BOOL rsp = NT_SUCCESS(hook(nullptr, &hookReq, &status, nullptr));
+		BOOL rsp = LI_FN(DeviceIoControl).cached()(m_hDriver, IO_READ_PROCESS_MEMORY_32, &req, sizeof(req), &req, sizeof(req), nullptr, nullptr);
 		if (!rsp)
 		{
 			m_dwErrorCode = LI_FN(GetLastError).cached()();
 		}
 		else
 		{
-			if (!NT_SUCCESS(req.Result))
+			if (!NT_SUCCESS(req.result))
 			{
-				m_dwErrorCode = req.Result;
+				m_dwErrorCode = req.result;
 			}
 		}
 
 		NoErrors = true;
-
 	}
 private:
+	HANDLE m_hDriver;
 	DWORD m_dwErrorCode;
-	const char* m_szFunction = nullptr;
-	fnNtHooked hook = nullptr;
+	DWORD m_dwProcessId;
 };
