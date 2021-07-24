@@ -1,6 +1,6 @@
 #pragma once
 
-#define DRIVER_NAME			L"bwf_ac_1"
+#define DRIVER_NAME			L"bxbox_1"
 
 #define DEVICE_NAME			L"\\Device\\"DRIVER_NAME
 #define SYMBOL_NAME			L"\\DosDevices\\"DRIVER_NAME

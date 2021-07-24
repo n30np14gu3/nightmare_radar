@@ -4,7 +4,7 @@
 /**
  * \brief Driver device Name
  */
-#define DRIVER_NAME						"\\\\.\\bwf_ac_1"
+#define DRIVER_NAME						"\\\\.\\bxbox_1"
 
  /**
  * \brief Game for hacking
